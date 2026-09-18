@@ -1,0 +1,1698 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>サバイバー v21</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #111;
+            color: #fff;
+            font-family: sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+        canvas {
+            display: block;
+            background: #192e16;
+        }
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 16px;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 1px 1px 3px #000;
+        }
+        #exp-bar-container {
+            position: absolute;
+            top: 38px;
+            left: 10px;
+            right: 10px;
+            height: 8px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        #exp-bar {
+            width: 0%;
+            height: 100%;
+            background: #3498db;
+        }
+        #level-display {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            font-size: 13px;
+            color: #3498db;
+            text-shadow: 1px 1px 2px #000;
+            font-weight: bold;
+        }
+        #stage-display {
+            position: absolute;
+            top: 70px;
+            left: 10px;
+            font-size: 13px;
+            color: #f1c40f;
+            text-shadow: 1px 1px 2px #000;
+            font-weight: bold;
+        }
+        #acquired-skills-ui {
+            position: absolute;
+            top: 92px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            pointer-events: none;
+            z-index: 5;
+            max-height: 40vh;
+            overflow-y: auto;
+        }
+        .skill-tag {
+            background: rgba(0, 0, 0, 0.65);
+            border: 1px solid rgba(241, 196, 15, 0.5);
+            color: #f1c40f;
+            padding: 2px 6px;
+            font-size: 11px;
+            border-radius: 4px;
+            width: fit-content;
+            text-shadow: 1px 1px 2px #000;
+        }
+        #player-hp-ui {
+            position: absolute;
+            bottom: 25px;
+            right: 20px;
+            width: 140px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 6px 10px;
+            display: flex;
+            flex-direction: column;
+            pointer-events: none;
+            z-index: 5;
+        }
+        #player-hp-text {
+            font-size: 11px;
+            color: #2ecc71;
+            font-weight: bold;
+            margin-bottom: 3px;
+            text-align: right;
+            text-shadow: 1px 1px 2px #000;
+        }
+        #player-hp-bar-container {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #player-hp-bar {
+            width: 100%;
+            height: 100%;
+            background: #2ecc71;
+            transition: width 0.1s linear;
+        }
+        #boss-ui {
+            position: absolute;
+            top: 70px;
+            left: 20%;
+            right: 20%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+            z-index: 5;
+        }
+        #boss-name {
+            font-size: 13px;
+            color: #e74c3c;
+            font-weight: bold;
+            margin-bottom: 3px;
+            text-shadow: 1px 1px 2px #000;
+        }
+        #boss-hp-bar-container {
+            width: 100%;
+            height: 12px;
+            background: #222;
+            border: 2px solid #e74c3c;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        #boss-hp-bar {
+            width: 100%;
+            height: 100%;
+            background: #e74c3c;
+            transition: width 0.1s linear;
+        }
+        #modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.88);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        .skill-btn {
+            background: #2c3e50;
+            border: 2px solid #f1c40f;
+            color: white;
+            padding: 12px 16px;
+            margin: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 380px;
+            cursor: pointer;
+            text-align: left;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        }
+        .skill-btn:active {
+            transform: scale(0.97);
+        }
+        .skill-desc {
+            font-size: 11px;
+            color: #bdc3c7;
+            font-weight: normal;
+            margin-top: 3px;
+        }
+        #start-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.96);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            text-align: center;
+            padding: 20px;
+        }
+        #start-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 16px 45px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 25px;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.5);
+        }
+        #start-btn:active {
+            transform: scale(0.95);
+        }
+        #result-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.94);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+            text-align: center;
+            padding: 20px;
+        }
+        #title-back-btn {
+            background: #34495e;
+            color: white;
+            border: 2px solid #f1c40f;
+            padding: 14px 35px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        #title-back-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1 style="color: #e74c3c; text-shadow: 0 0 16px rgba(231,76,60,0.6); font-size: 46px; margin-bottom: 25px;">サバイバー</h1>
+        
+        <div style="background: rgba(255,255,255,0.07); border: 2px solid #f1c40f; border-radius: 12px; padding: 14px 30px; margin-bottom: 10px; min-width: 220px;">
+            <div style="font-size: 13px; color: #aaa; margin-bottom: 4px;">👑 ハイスコアランキング</div>
+            <div id="ranking-board" style="font-size: 24px; color: #f1c40f; font-weight: bold;">0 pt</div>
+        </div>
+
+        <button id="start-btn" onclick="onStartButtonClick()">スタート</button>
+    </div>
+
+    <div id="result-screen">
+        <h1 style="color: #e74c3c; text-shadow: 0 0 14px rgba(231,76,60,0.5); font-size: 38px; margin-bottom: 20px;">ゲームオーバー</h1>
+        
+        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 18px 25px; width: 280px; text-align: left; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+            <div style="font-size: 15px; color: #f1c40f;" id="result-stage">🌲 到達ステージ: ステージ 1 (森)</div>
+            <div style="font-size: 15px; color: #3498db;" id="result-score">⭐ 獲得スコア: 0 pt</div>
+            <div style="font-size: 15px; color: #2ecc71;" id="result-rank">🏆 ハイスコア: 0 pt</div>
+        </div>
+
+        <button id="title-back-btn" onclick="onTitleBackButtonClick()">タイトル画面へ戻る</button>
+    </div>
+
+    <div id="ui">
+        <span id="score-display">スコア: 0</span>
+        <span id="timer-display">ボスまで: 60s</span>
+    </div>
+    <div id="exp-bar-container"><div id="exp-bar"></div></div>
+    <div id="level-display">Lv.1</div>
+    <div id="stage-display">ステージ: 1 (森)</div>
+
+    <div id="acquired-skills-ui"></div>
+
+    <div id="player-hp-ui">
+        <span id="player-hp-text">HP: 120/120</span>
+        <div id="player-hp-bar-container">
+            <div id="player-hp-bar"></div>
+        </div>
+    </div>
+
+    <div id="boss-ui">
+        <span id="boss-name">⚠️ 強敵出現 ⚠️</span>
+        <div id="boss-hp-bar-container">
+            <div id="boss-hp-bar"></div>
+        </div>
+    </div>
+
+    <div id="modal">
+        <h2 id="modal-title" style="color: #f1c40f; margin-bottom: 5px;">レベルアップ！</h2>
+        <p id="modal-desc" style="font-size: 13px; color: #aaa; margin-top:0; margin-bottom:12px;">強力なスキルを1つ選択しよう</p>
+        <div id="skill-choices" style="display:flex; flex-direction:column; align-items:center; width:100%;"></div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+let audioCtx = null;
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+function playSound(type) {
+    if (!audioCtx) return;
+    try {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        let now = audioCtx.currentTime;
+
+        if (type === 'shoot') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.linearRampToValueAtTime(300, now + 0.08);
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+            osc.start(now); osc.stop(now + 0.08);
+        } else if (type === 'thunder') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.linearRampToValueAtTime(150, now + 0.15);
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now); osc.stop(now + 0.15);
+        } else if (type === 'bomb') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(120, now);
+            osc.frequency.linearRampToValueAtTime(30, now + 0.35);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+            osc.start(now); osc.stop(now + 0.35);
+        } else if (type === 'hit') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(120, now);
+            osc.frequency.linearRampToValueAtTime(60, now + 0.08);
+            gain.gain.setValueAtTime(0.04, now);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.08);
+            osc.start(now); osc.stop(now + 0.08);
+        } else if (type === 'beam') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(500, now);
+            osc.frequency.linearRampToValueAtTime(150, now + 0.3);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        } else if (type === 'gem') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(700, now);
+            osc.frequency.exponentialRampToValueAtTime(1500, now + 0.07);
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.07);
+            osc.start(now); osc.stop(now + 0.07);
+        } else if (type === 'heal') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now); osc.stop(now + 0.15);
+        } else if (type === 'levelup') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(261.63, now);
+            osc.frequency.setValueAtTime(329.63, now + 0.1);
+            osc.frequency.setValueAtTime(392.00, now + 0.2);
+            osc.frequency.setValueAtTime(523.25, now + 0.3);
+            gain.gain.setValueAtTime(0.09, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+        } else if (type === 'boss_warn') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.linearRampToValueAtTime(400, now + 0.3);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        }
+    } catch(e) {}
+}
+
+let gameStarted = false;
+let isPaused = false;
+let score = 0;
+let kills = 0;
+let stageLevel = 1;
+
+let highScore = localStorage.getItem('survivor_highscore') || 0;
+updateRankingDisplay();
+
+function updateRankingDisplay() {
+    const rankEl = document.getElementById('ranking-board');
+    rankEl.innerHTML = `${highScore} pt`;
+}
+
+const ARENA_SIZE = 2200;
+
+const player = {
+    x: ARENA_SIZE / 2,
+    y: ARENA_SIZE / 2,
+    radius: 20,
+    speed: 4.2,
+    maxHp: 120,
+    hp: 120,
+    level: 1,
+    exp: 0,
+    maxExp: 10,
+    facing: 1,
+    magnetRadius: 240,
+    skills: {
+        missile: 1,
+        swordRing: 0,
+        thunder: 0,
+        boomerang: 0,
+        drone: 0,
+        laserBeam: 0,
+        soccerBall: 0,
+        drillShot: 0,
+        rocket: 0,
+        firePot: 0,
+        giantBomb: 0,
+        speedBoost: 0,
+        magnetBoost: 0
+    }
+};
+
+let zombies = [];
+let gems = [];
+let hearts = [];
+let bullets = [];
+let rotatingSwords = [];
+let boomerangs = [];
+let soccerBalls = [];
+let drills = [];
+let rockets = [];
+let firePots = [];
+let explosions = [];
+let thunders = [];
+let sweepLasers = [];
+let bossBeams = [];
+
+let waveTimer = 60 * 60; 
+let bossActive = false;
+let currentBoss = null;
+
+let arenaObjects = [];
+function generateStageEnvironment() {
+    arenaObjects = [];
+    let count = 500;
+    for(let i=0; i<count; i++) {
+        arenaObjects.push({
+            x: Math.random() * ARENA_SIZE,
+            y: Math.random() * ARENA_SIZE,
+            type: Math.floor(Math.random() * 3),
+            size: 10 + Math.random() * 12
+        });
+    }
+}
+generateStageEnvironment();
+
+let joystick = {
+    active: false,
+    startX: 0,
+    startY: 0,
+    currentX: 0,
+    currentY: 0,
+    vx: 0,
+    vy: 0
+};
+
+window.addEventListener('pointerdown', (e) => {
+    if (!gameStarted || isPaused) return;
+    joystick.active = true;
+    joystick.startX = e.clientX;
+    joystick.startY = e.clientY;
+    joystick.currentX = e.clientX;
+    joystick.currentY = e.clientY;
+    joystick.vx = 0;
+    joystick.vy = 0;
+});
+
+window.addEventListener('pointermove', (e) => {
+    if (!joystick.active) return;
+    joystick.currentX = e.clientX;
+    joystick.currentY = e.clientY;
+
+    let dx = joystick.currentX - joystick.startX;
+    let dy = joystick.currentY - joystick.startY;
+    let dist = Math.hypot(dx, dy);
+    
+    if (dist > 3) {
+        joystick.vx = dx / dist;
+        joystick.vy = dy / dist;
+    } else {
+        joystick.vx = 0;
+        joystick.vy = 0;
+    }
+});
+
+window.addEventListener('pointerup', () => {
+    joystick.active = false;
+    joystick.vx = 0;
+    joystick.vy = 0;
+});
+
+function onStartButtonClick() {
+    initAudio();
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('result-screen').style.display = 'none';
+    gameStarted = true;
+    resetGame();
+    loop();
+}
+
+function onTitleBackButtonClick() {
+    document.getElementById('result-screen').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'flex';
+    updateRankingDisplay();
+}
+
+function resetGame() {
+    player.x = ARENA_SIZE / 2;
+    player.y = ARENA_SIZE / 2;
+    player.maxHp = 120;
+    player.hp = player.maxHp;
+    player.level = 1;
+    player.exp = 0;
+    player.maxExp = 10;
+    player.speed = 4.2;
+    
+    for(let key in player.skills) {
+        player.skills[key] = (key === 'missile' ? 1 : 0);
+    }
+
+    zombies = [];
+    gems = [];
+    hearts = [];
+    bullets = [];
+    rotatingSwords = [];
+    boomerangs = [];
+    soccerBalls = [];
+    drills = [];
+    rockets = [];
+    firePots = [];
+    explosions = [];
+    thunders = [];
+    sweepLasers = [];
+    bossBeams = [];
+    score = 0;
+    kills = 0;
+    stageLevel = 1;
+    waveTimer = 60 * 60;
+    bossActive = false;
+    currentBoss = null;
+    document.getElementById('boss-ui').style.display = 'none';
+    isPaused = false;
+    generateStageEnvironment();
+    updateAcquiredSkillsUI();
+    updateStageUI();
+}
+
+function updateStageUI() {
+    const names = { 1: '森', 2: '砂漠', 3: '海（海底遺跡）', 4: '溶岩地帯' };
+    let curName = names[stageLevel] || '魔王城';
+    document.getElementById('stage-display').innerText = `ステージ: ${stageLevel} (${curName})`;
+}
+
+function updateAcquiredSkillsUI() {
+    const container = document.getElementById('acquired-skills-ui');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    const skillDisplayNames = {
+        missile: '🗡️ クナイ',
+        swordRing: '⚔️ 回転ソード',
+        thunder: '⚡ 雷落とし',
+        boomerang: '🪃 ブーメラン',
+        drone: '🛸 サテライト',
+        laserBeam: '🔴 範囲レーザー',
+        soccerBall: '⚽ サッカー',
+        drillShot: '🔩 ドリル',
+        rocket: '🚀 ロケット',
+        firePot: '🧪 火炎瓶',
+        giantBomb: '💣 超広範囲ボム',
+        speedBoost: '👟 機動力',
+        magnetBoost: '🧲 マグネット'
+    };
+
+    for (let key in player.skills) {
+        if (player.skills[key] > 0) {
+            let tag = document.createElement('div');
+            tag.className = 'skill-tag';
+            tag.innerText = `${skillDisplayNames[key] || key} Lv.${player.skills[key]}`;
+            container.appendChild(tag);
+        }
+    }
+}
+
+function getClosestZombie(fromX, fromY) {
+    if (currentBoss) return currentBoss; 
+    if (zombies.length === 0) return null;
+    let closest = zombies[0];
+    let minDist = Math.hypot(fromX - closest.x, fromY - closest.y);
+    for (let i = 1; i < zombies.length; i++) {
+        let dist = Math.hypot(fromX - zombies[i].x, fromY - zombies[i].y);
+        if (dist < minDist) {
+            minDist = dist;
+            closest = zombies[i];
+        }
+    }
+    return closest;
+}
+
+let spawnTimer = 0;
+function spawnZombie() {
+    if (bossActive) return; 
+
+    spawnTimer++;
+    let spawnRate = Math.max(8, 26 - (stageLevel * 3) - Math.floor(kills / 6));
+    if (spawnTimer > spawnRate) {
+        spawnTimer = 0;
+        let angle = Math.random() * Math.PI * 2;
+        let dist = 600 + Math.random() * 200;
+        let zx = player.x + Math.cos(angle) * dist;
+        let zy = player.y + Math.sin(angle) * dist;
+
+        zx = Math.max(80, Math.min(ARENA_SIZE - 80, zx));
+        zy = Math.max(80, Math.min(ARENA_SIZE - 80, zy));
+
+        let rand = Math.random();
+        let stageMultiplier = 1 + (stageLevel - 1) * 0.65;
+        let baseHp = (6 + Math.floor(kills * 0.25)) * stageMultiplier;
+        let baseSpeed = (1.4 + Math.random() * 0.4) + (stageLevel - 1) * 0.25;
+
+        let z = {
+            x: zx,
+            y: zy,
+            radius: 18,
+            speed: baseSpeed,
+            hp: baseHp,
+            maxHp: baseHp,
+            type: 'normal',
+            hitFlash: 0,
+            stage: stageLevel
+        };
+
+        if (rand < 0.25) {
+            z.type = 'fast';
+            z.radius = 14;
+            z.speed = baseSpeed * 1.5;
+            z.hp = Math.max(4, Math.floor(baseHp * 0.6));
+            z.maxHp = z.hp;
+        } else if (rand < 0.50) {
+            z.type = 'tank';
+            z.radius = 26;
+            z.speed = baseSpeed * 0.6;
+            z.hp = baseHp * 2.5;
+            z.maxHp = z.hp;
+        } else if (rand < 0.75) {
+            z.type = 'skull';
+            z.radius = 16;
+            z.speed = baseSpeed * 1.3;
+            z.hp = baseHp * 0.7;
+            z.maxHp = z.hp;
+        } else {
+            z.type = 'slime';
+            z.radius = 22;
+            z.speed = baseSpeed * 0.85;
+            z.hp = baseHp * 1.8;
+            z.maxHp = z.hp;
+        }
+
+        zombies.push(z);
+    }
+}
+
+function startBossWave() {
+    bossActive = true;
+    zombies = []; 
+    playSound('boss_warn');
+
+    let angle = Math.random() * Math.PI * 2;
+    let bx = player.x + Math.cos(angle) * 450;
+    let by = player.y + Math.sin(angle) * 450;
+    bx = Math.max(100, Math.min(ARENA_SIZE - 100, bx));
+    by = Math.max(100, Math.min(ARENA_SIZE - 100, by));
+
+    let bossHp = (300 + kills * 8) * (1 + (stageLevel - 1) * 0.8);
+    let bossNames = { 1: '巨樹の守護者「トレント・キング」', 2: '砂漠の覇王「サンド・ゴーレム」', 3: '深海の暴君「クラーケン・ロード」', 4: '溶岩の魔神「マグマ・ドレイク」' };
+    
+    currentBoss = {
+        x: bx,
+        y: by,
+        radius: 46,
+        speed: 1.2 + stageLevel * 0.15,
+        hp: bossHp,
+        maxHp: bossHp,
+        hitFlash: 0,
+        beamCooldown: 0,
+        name: bossNames[stageLevel] || '最強魔王'
+    };
+
+    document.getElementById('boss-name').innerText = `⚠️ ${currentBoss.name} 出現中 ⚠️`;
+    document.getElementById('boss-ui').style.display = 'flex';
+}
+
+let attackTimer = 0;
+function updateWeapons() {
+    attackTimer++;
+
+    // クナイ：レベルに応じて発射数が増加
+    let kunaiInterval = Math.max(8, 22 - player.skills.missile * 2);
+    if (player.skills.missile > 0 && attackTimer % kunaiInterval === 0) {
+        playSound('shoot');
+        let count = 1 + Math.floor(player.skills.missile / 3);
+        let baseTarget = getClosestZombie(player.x, player.y);
+        for(let i=0; i<count; i++) {
+            let target = baseTarget;
+            if (i > 0) target = zombies[Math.floor(Math.random() * zombies.length)] || baseTarget;
+            if (target) {
+                let angle = Math.atan2(target.y - player.y, target.x - player.x) + (i - (count-1)/2) * 0.15;
+                bullets.push({
+                    x: player.x, y: player.y,
+                    vx: Math.cos(angle) * 16, vy: Math.sin(angle) * 16,
+                    damage: 10 + player.skills.missile * 4,
+                    radius: 8, life: 80, type: 'kunai', angle: angle
+                });
+            }
+        }
+    }
+
+    if (player.skills.thunder > 0 && attackTimer % Math.max(25, 50 - player.skills.thunder * 6) === 0) {
+        playSound('thunder');
+        let strikeCount = 1 + Math.floor(player.skills.thunder / 3);
+        for(let i=0; i<strikeCount; i++) {
+            let target = currentBoss;
+            if (!target && zombies.length > 0) {
+                target = zombies[Math.floor(Math.random() * zombies.length)];
+            }
+            if (target) {
+                thunders.push({ x: target.x + (Math.random()-0.5)*40, y: target.y + (Math.random()-0.5)*40, life: 12 });
+                target.hp -= 20 + player.skills.thunder * 10;
+                target.hitFlash = 6;
+            }
+        }
+    }
+
+    if (player.skills.boomerang > 0 && attackTimer % Math.max(35, 65 - player.skills.boomerang * 8) === 0) {
+        playSound('shoot');
+        let count = 1 + Math.floor(player.skills.boomerang / 4);
+        for(let i=0; i<count; i++) {
+            let angle = (i * Math.PI * 2 / count) + (Math.random() * 0.2);
+            boomerangs.push({
+                x: player.x, y: player.y,
+                vx: Math.cos(angle) * 9, vy: Math.sin(angle) * 9,
+                damage: 15 + player.skills.boomerang * 6,
+                life: 55, returning: false, rotation: 0
+            });
+        }
+    }
+
+    if (player.skills.drone > 0 && attackTimer % Math.max(10, 20 - player.skills.drone) === 0) {
+        let target = getClosestZombie(player.x, player.y);
+        if (target) {
+            bullets.push({
+                x: player.x + (Math.random()-0.5)*60, y: player.y + (Math.random()-0.5)*60,
+                vx: (target.x - player.x) * 0.18, vy: (target.y - player.y) * 0.18,
+                damage: 10 + player.skills.drone * 5, radius: 9, life: 50, type: 'drone'
+            });
+        }
+    }
+
+    // 範囲レーザー（一掃から通常範囲に変更）
+    if (player.skills.laserBeam > 0 && attackTimer % Math.max(40, 80 - player.skills.laserBeam * 8) === 0) {
+        playSound('beam');
+        let target = getClosestZombie(player.x, player.y);
+        let angle = target ? Math.atan2(target.y - player.y, target.x - player.x) : (player.facing === 1 ? 0 : Math.PI);
+        sweepLasers.push({
+            x: player.x, y: player.y,
+            angle: angle,
+            life: 18,
+            range: 480,
+            damage: 28 + player.skills.laserBeam * 12
+        });
+    }
+
+    if (player.skills.soccerBall > 0 && attackTimer % Math.max(30, 60 - player.skills.soccerBall * 7) === 0) {
+        let count = 1 + Math.floor(player.skills.soccerBall / 3);
+        for(let i=0; i<count; i++) {
+            let angle = Math.random() * Math.PI * 2;
+            soccerBalls.push({
+                x: player.x, y: player.y,
+                vx: Math.cos(angle) * 7, vy: Math.sin(angle) * 7,
+                damage: 18 + player.skills.soccerBall * 8,
+                radius: 12, life: 90
+            });
+        }
+    }
+
+    if (player.skills.drillShot > 0 && attackTimer % Math.max(40, 75 - player.skills.drillShot * 9) === 0) {
+        let target = getClosestZombie(player.x, player.y);
+        if (target) {
+            let angle = Math.atan2(target.y - player.y, target.x - player.x);
+            drills.push({
+                x: player.x, y: player.y,
+                vx: Math.cos(angle) * 11, vy: Math.sin(angle) * 11,
+                damage: 22 + player.skills.drillShot * 10,
+                radius: 10, life: 70
+            });
+        }
+    }
+
+    // ロケット：レベルに応じて複数発射
+    if (player.skills.rocket > 0 && attackTimer % Math.max(50, 90 - player.skills.rocket * 10) === 0) {
+        let count = 1 + Math.floor(player.skills.rocket / 3);
+        for(let i=0; i<count; i++) {
+            let target = getClosestZombie(player.x, player.y);
+            if (target) {
+                rockets.push({
+                    x: player.x + (Math.random()-0.5)*30, y: player.y + (Math.random()-0.5)*30,
+                    target: target,
+                    speed: 6.5,
+                    damage: 40 + player.skills.rocket * 15,
+                    radius: 10, life: 100
+                });
+            }
+        }
+    }
+
+    if (player.skills.firePot > 0 && attackTimer % 60 === 0) {
+        let angle = Math.random() * Math.PI * 2;
+        let dist = 80 + Math.random() * 140;
+        firePots.push({
+            x: player.x + Math.cos(angle)*dist,
+            y: player.y + Math.sin(angle)*dist,
+            radius: 50 + player.skills.firePot * 8,
+            damage: 5 + player.skills.firePot * 2,
+            life: 80
+        });
+    }
+
+    if (player.skills.giantBomb > 0 && attackTimer % Math.max(45, 85 - player.skills.giantBomb * 10) === 0) {
+        playSound('bomb');
+        let target = getClosestZombie(player.x, player.y);
+        let bx = target ? target.x : player.x + (Math.random()-0.5)*200;
+        let by = target ? target.y : player.y + (Math.random()-0.5)*200;
+        explosions.push({
+            x: bx, y: by, radius: 12,
+            maxRadius: 100 + player.skills.giantBomb * 25,
+            damage: 50 + player.skills.giantBomb * 15, life: 15
+        });
+    }
+}
+
+const allSkillDefs = [
+    { key: 'missile', name: '🗡️ クナイミサイル', desc: '敵を自動追尾するクナイの数と火力がアップする' },
+    { key: 'swordRing', name: '⚔️ 回転ソード', desc: 'プレイヤーの周囲を回転し切り刻むブレード' },
+    { key: 'thunder', name: '⚡ 雷落とし', desc: '敵の頭上に強力な稲妻を複数直撃させる' },
+    { key: 'boomerang', name: '🪃 ブーメラン', desc: '広範囲を往復しながら敵を次々となぎ払う大剣' },
+    { key: 'drone', name: '🛸 サテライトドローン', desc: '自動で周囲にエネルギー弾を高頻度で乱射' },
+    { key: 'laserBeam', name: '🔴 範囲レーザー', desc: '前方に向かって使いやすい範囲レーザーを照射' },
+    { key: 'soccerBall', name: '⚽ サッカーボール', desc: '画面内を激しく跳ね返るボールの数が増加' },
+    { key: 'drillShot', name: '🔩 ドリルショット', desc: '敵を強力に貫通する高速ドリルを発射' },
+    { key: 'rocket', name: '🚀 ロケット発射器', desc: '敵を追尾し爆発するロケットの数が増加' },
+    { key: 'firePot', name: '🧪 火炎瓶', desc: '地面に炎のエリアを展開し踏んだ敵を焼却' },
+    { key: 'giantBomb', name: '💣 超広範囲ボム', desc: 'モンスターの群れを一網打尽にする大爆発' },
+    { key: 'speedBoost', name: '👟 機動力アップ', desc: '移動速度が大幅に上昇し生存率がアップする' },
+    { key: 'magnetBoost', name: '🧲 ジェムマグネット拡大', desc: '離れた場所にある経験値を広範囲から回収' }
+];
+
+function triggerLevelUp() {
+    isPaused = true;
+    playSound('levelup');
+    const modal = document.getElementById('modal');
+    document.getElementById('modal-title').innerText = 'レベルアップ！';
+    document.getElementById('modal-desc').innerText = '強力なスキルを3つの選択肢から1つ選ぼう';
+    const choices = document.getElementById('skill-choices');
+    choices.innerHTML = '';
+
+    // 2択から「3択」に変更
+    let shuffled = [...allSkillDefs].sort(() => 0.5 - Math.random());
+    let selectedChoices = shuffled.slice(0, 3);
+
+    selectedChoices.forEach(skill => {
+        let currentLv = player.skills[skill.key];
+        let btn = document.createElement('button');
+        btn.className = 'skill-btn';
+        btn.innerHTML = `${skill.name} (Lv.${currentLv} → Lv.${currentLv+1})<div class="skill-desc">${skill.desc}</div>`;
+        btn.onclick = () => {
+            player.skills[skill.key]++;
+
+            if (skill.key === 'speedBoost') player.speed += 0.5;
+            if (skill.key === 'magnetBoost') player.magnetRadius += 70;
+
+            if (skill.key === 'swordRing' && currentLv === 0) {
+                rotatingSwords.push({ angle: 0, distance: 85, damage: 16 });
+                rotatingSwords.push({ angle: Math.PI, distance: 85, damage: 16 });
+            } else if (skill.key === 'swordRing' && currentLv > 0) {
+                rotatingSwords.push({ angle: (rotatingSwords.length * Math.PI / 2), distance: 85, damage: 16 + player.skills.swordRing * 5 });
+            }
+
+            updateAcquiredSkillsUI();
+            modal.style.display = 'none';
+            isPaused = false;
+        };
+        choices.appendChild(btn);
+    });
+
+    modal.style.display = 'flex';
+}
+
+function triggerBossReward() {
+    isPaused = true;
+    playSound('levelup');
+    const modal = document.getElementById('modal');
+    document.getElementById('modal-title').innerText = `🎁 ステージ ${stageLevel} クリア報酬！`;
+    document.getElementById('modal-desc').innerText = '3つの報酬から1つ選んで次なるステージへ進もう！';
+    const choices = document.getElementById('skill-choices');
+    choices.innerHTML = '';
+
+    let rewardOptions = [
+        { name: '💖 完全回復 ＆ 最大HPアップ', desc: 'HPを全回復し、最大HPが+50増加する', effect: () => { player.maxHp += 50; player.hp = player.maxHp; } },
+        { name: '⚡ 全スキルの強力ブースト', desc: 'すべての攻撃の威力が底上げされる', effect: () => { for(let k in player.skills){ if(player.skills[k]>0) player.skills[k]++; } } },
+        { name: '👟 超・移動速度アップ', desc: '機動力が大幅にアップし敵を翻弄する', effect: () => { player.speed += 1.2; } },
+        { name: '🧲 超強力マグネット', desc: 'マップ全体のジェムを瞬時に引き寄せる', effect: () => { player.magnetRadius += 300; } }
+    ];
+
+    let normalChoices = [...allSkillDefs].sort(() => 0.5 - Math.random()).slice(0, 2).map(s => ({
+        name: s.name + ' 強化',
+        desc: s.desc,
+        effect: () => { player.skills[s.key]++; updateAcquiredSkillsUI(); }
+    }));
+
+    // ボス報酬も3択に設定
+    let combinedPool = [...rewardOptions, ...normalChoices].sort(() => 0.5 - Math.random()).slice(0, 3);
+
+    combinedPool.forEach(reward => {
+        let btn = document.createElement('button');
+        btn.className = 'skill-btn';
+        btn.style.borderColor = '#e74c3c';
+        btn.innerHTML = `${reward.name}<div class="skill-desc">${reward.desc}</div>`;
+        btn.onclick = () => {
+            reward.effect();
+            updateAcquiredSkillsUI();
+            modal.style.display = 'none';
+            
+            stageLevel++;
+            generateStageEnvironment();
+            updateStageUI();
+
+            isPaused = false;
+        };
+        choices.appendChild(btn);
+    });
+
+    modal.style.display = 'flex';
+}
+
+function update() {
+    if (isPaused || !gameStarted) return;
+
+    if (!bossActive) {
+        waveTimer--;
+        if (waveTimer <= 0) {
+            startBossWave();
+        }
+    }
+
+    if (joystick.active) {
+        let moveX = joystick.vx * player.speed;
+        let moveY = joystick.vy * player.speed;
+        player.x += moveX;
+        player.y += moveY;
+
+        player.x = Math.max(60, Math.min(ARENA_SIZE - 60, player.x));
+        player.y = Math.max(60, Math.min(ARENA_SIZE - 60, player.y));
+
+        if (moveX > 0.1) player.facing = 1;
+        if (moveX < -0.1) player.facing = -1;
+    }
+
+    if (rotatingSwords.length > 0) {
+        rotatingSwords.forEach(sw => {
+            sw.angle += 0.085;
+            let sx = player.x + Math.cos(sw.angle) * sw.distance;
+            let sy = player.y + Math.sin(sw.angle) * sw.distance;
+            
+            if (currentBoss && Math.hypot(sx - currentBoss.x, sy - currentBoss.y) < currentBoss.radius + 18) {
+                currentBoss.hp -= sw.damage * 0.15;
+                currentBoss.hitFlash = 3;
+            }
+            zombies.forEach(z => {
+                if (Math.hypot(sx - z.x, sy - z.y) < z.radius + 18) {
+                    z.hp -= sw.damage * 0.15;
+                    z.hitFlash = 3;
+                }
+            });
+        });
+    }
+
+    soccerBalls.forEach(sb => {
+        sb.x += sb.vx;
+        sb.y += sb.vy;
+        sb.life--;
+        if (sb.x < 50 || sb.x > ARENA_SIZE - 50) sb.vx *= -1;
+        if (sb.y < 50 || sb.y > ARENA_SIZE - 50) sb.vy *= -1;
+
+        if (currentBoss && Math.hypot(sb.x - currentBoss.x, sb.y - currentBoss.y) < currentBoss.radius + sb.radius) {
+            currentBoss.hp -= sb.damage * 0.2;
+            currentBoss.hitFlash = 4;
+            sb.vx *= -1; sb.vy *= -1;
+        }
+        zombies.forEach(z => {
+            if (Math.hypot(sb.x - z.x, sb.y - z.y) < z.radius + sb.radius) {
+                z.hp -= sb.damage * 0.3;
+                z.hitFlash = 4;
+                sb.vx *= -1; sb.vy *= -1;
+            }
+        });
+    });
+    soccerBalls = soccerBalls.filter(sb => sb.life > 0);
+
+    drills.forEach(d => {
+        d.x += d.vx;
+        d.y += d.vy;
+        d.life--;
+        if (currentBoss && Math.hypot(d.x - currentBoss.x, d.y - currentBoss.y) < currentBoss.radius + d.radius) {
+            currentBoss.hp -= d.damage * 0.25;
+            currentBoss.hitFlash = 3;
+        }
+        zombies.forEach(z => {
+            if (Math.hypot(d.x - z.x, d.y - z.y) < z.radius + d.radius) {
+                z.hp -= d.damage;
+                z.hitFlash = 4;
+            }
+        });
+    });
+    drills = drills.filter(d => d.life > 0);
+
+    rockets.forEach(r => {
+        if (r.target && (r.target.hp > 0)) {
+            let angle = Math.atan2(r.target.y - r.y, r.target.x - r.x);
+            r.x += Math.cos(angle) * r.speed;
+            r.y += Math.sin(angle) * r.speed;
+        } else {
+            r.x += r.speed;
+        }
+        r.life--;
+        let hit = false;
+        if (currentBoss && Math.hypot(r.x - currentBoss.x, r.y - currentBoss.y) < currentBoss.radius + 15) {
+            hit = true;
+        } else {
+            zombies.forEach(z => {
+                if (Math.hypot(r.x - z.x, r.y - z.y) < z.radius + 15) hit = true;
+            });
+        }
+        if (hit || r.life <= 0) {
+            explosions.push({ x: r.x, y: r.y, radius: 10, maxRadius: 75, damage: r.damage, life: 12 });
+            r.dead = true;
+        }
+    });
+    rockets = rockets.filter(r => !r.dead && r.life > 0);
+
+    firePots.forEach(fp => {
+        fp.life--;
+        if (currentBoss && Math.hypot(fp.x - currentBoss.x, fp.y - currentBoss.y) < fp.radius) {
+            currentBoss.hp -= fp.damage * 0.2;
+            currentBoss.hitFlash = 2;
+        }
+        zombies.forEach(z => {
+            if (Math.hypot(fp.x - z.x, fp.y - z.y) < fp.radius + z.radius) {
+                z.hp -= fp.damage * 0.3;
+                z.hitFlash = 2;
+            }
+        });
+    });
+    firePots = firePots.filter(fp => fp.life > 0);
+
+    for (let i = sweepLasers.length - 1; i >= 0; i--) {
+        let sl = sweepLasers[i];
+        sl.life--;
+
+        if (currentBoss) {
+            let dx = currentBoss.x - sl.x;
+            let dy = currentBoss.y - sl.y;
+            let proj = dx * Math.cos(sl.angle) + dy * Math.sin(sl.angle);
+            if (proj > 0 && proj < sl.range) {
+                let perpX = sl.x + Math.cos(sl.angle) * proj;
+                let perpY = sl.y + Math.sin(sl.angle) * proj;
+                if (Math.hypot(currentBoss.x - perpX, currentBoss.y - perpY) < currentBoss.radius + 25) {
+                    currentBoss.hp -= sl.damage * 0.4;
+                    currentBoss.hitFlash = 8;
+                }
+            }
+        }
+        zombies.forEach(z => {
+            let dx = z.x - sl.x;
+            let dy = z.y - sl.y;
+            let proj = dx * Math.cos(sl.angle) + dy * Math.sin(sl.angle);
+            if (proj > 0 && proj < sl.range) {
+                let perpX = sl.x + Math.cos(sl.angle) * proj;
+                let perpY = sl.y + Math.sin(sl.angle) * proj;
+                if (Math.hypot(z.x - perpX, z.y - perpY) < z.radius + 20) {
+                    z.hp -= sl.damage * 1.5;
+                    z.hitFlash = 8;
+                }
+            }
+        });
+
+        if (sl.life <= 0) sweepLasers.splice(i, 1);
+    }
+
+    if (currentBoss) {
+        if (currentBoss.hitFlash > 0) currentBoss.hitFlash--;
+        let angle = Math.atan2(player.y - currentBoss.y, player.x - currentBoss.x);
+        currentBoss.x += Math.cos(angle) * currentBoss.speed;
+        currentBoss.y += Math.sin(angle) * currentBoss.speed;
+
+        currentBoss.beamCooldown++;
+        if (currentBoss.beamCooldown > 120) {
+            currentBoss.beamCooldown = 0;
+            playSound('beam');
+            let fixedBeamAngle = Math.atan2(player.y - currentBoss.y, player.x - currentBoss.x);
+            bossBeams.push({
+                x: currentBoss.x, y: currentBoss.y,
+                angle: fixedBeamAngle, life: 35, maxRange: 700
+            });
+        }
+
+        let dist = Math.hypot(player.x - currentBoss.x, player.y - currentBoss.y);
+        if (dist < player.radius + currentBoss.radius) {
+            player.hp -= 2.2 + stageLevel * 0.3;
+            playSound('hit');
+            if (player.hp <= 0) { gameOver(); return; }
+        }
+
+        if (currentBoss.hp <= 0) {
+            score += 600 * stageLevel;
+            kills++;
+            playSound('bomb');
+
+            for(let i=0; i<8; i++) {
+                gems.push({ x: currentBoss.x + (Math.random()-0.5)*70, y: currentBoss.y + (Math.random()-0.5)*70, radius: 8 });
+            }
+            hearts.push({ x: currentBoss.x, y: currentBoss.y, radius: 10, healAmount: 80 });
+
+            currentBoss = null;
+            bossActive = false;
+            waveTimer = 60 * 60;
+            document.getElementById('boss-ui').style.display = 'none';
+
+            triggerBossReward();
+        }
+    }
+
+    for (let i = bossBeams.length - 1; i >= 0; i--) {
+        let b = bossBeams[i];
+        b.life--;
+        let dx = player.x - b.x;
+        let dy = player.y - b.y;
+        let proj = dx * Math.cos(b.angle) + dy * Math.sin(b.angle);
+        if (proj > 0 && proj < b.maxRange) {
+            let perpX = b.x + Math.cos(b.angle) * proj;
+            let perpY = b.y + Math.sin(b.angle) * proj;
+            if (Math.hypot(player.x - perpX, player.y - perpY) < player.radius + 12) {
+                player.hp -= 1.1;
+                playSound('hit');
+                if (player.hp <= 0) { gameOver(); return; }
+            }
+        }
+        if (b.life <= 0) bossBeams.splice(i, 1);
+    }
+
+    for (let i = zombies.length - 1; i >= 0; i--) {
+        let z = zombies[i];
+        if (z.hitFlash > 0) z.hitFlash--;
+
+        let angle = Math.atan2(player.y - z.y, player.x - z.x);
+        z.x += Math.cos(angle) * z.speed;
+        z.y += Math.sin(angle) * z.speed;
+
+        let dist = Math.hypot(player.x - z.x, player.y - z.y);
+        if (dist < player.radius + z.radius) {
+            player.hp -= 0.7 + (stageLevel - 1) * 0.2;
+            playSound('hit');
+            if (player.hp <= 0) { gameOver(); return; }
+        }
+
+        if (z.hp <= 0) {
+            score += 20 * stageLevel;
+            kills++;
+            gems.push({ x: z.x, y: z.y, radius: 8 });
+            if (Math.random() < 0.05) {
+                hearts.push({ x: z.x, y: z.y, radius: 10, healAmount: 25 });
+            }
+            zombies.splice(i, 1);
+        }
+    }
+
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        let b = bullets[i];
+        b.x += b.vx;
+        b.y += b.vy;
+        b.life--;
+
+        let hit = false;
+        if (currentBoss && Math.hypot(b.x - currentBoss.x, b.y - currentBoss.y) < b.radius + currentBoss.radius) {
+            currentBoss.hp -= b.damage;
+            currentBoss.hitFlash = 5;
+            hit = true;
+        } else {
+            for (let j = zombies.length - 1; j >= 0; j--) {
+                let z = zombies[j];
+                if (Math.hypot(b.x - z.x, b.y - z.y) < b.radius + z.radius) {
+                    z.hp -= b.damage;
+                    z.hitFlash = 5;
+                    hit = true;
+                    break;
+                }
+            }
+        }
+        if (hit || b.life <= 0) bullets.splice(i, 1);
+    }
+
+    for (let i = boomerangs.length - 1; i >= 0; i--) {
+        let bm = boomerangs[i];
+        bm.x += bm.vx;
+        bm.y += bm.vy;
+        bm.life--;
+        bm.rotation += 0.35;
+        if (bm.life < 28 && !bm.returning) {
+            bm.vx = -bm.vx;
+            bm.vy = -bm.vy;
+            bm.returning = true;
+        }
+
+        if (currentBoss && Math.hypot(bm.x - currentBoss.x, bm.y - currentBoss.y) < currentBoss.radius + 20) {
+            currentBoss.hp -= bm.damage * 0.3;
+            currentBoss.hitFlash = 4;
+        }
+        zombies.forEach(z => {
+            if (Math.hypot(bm.x - z.x, bm.y - z.y) < z.radius + 20) {
+                z.hp -= bm.damage * 0.3;
+                z.hitFlash = 4;
+            }
+        });
+        if (bm.life <= 0) boomerangs.splice(i, 1);
+    }
+
+    for (let i = explosions.length - 1; i >= 0; i--) {
+        let ex = explosions[i];
+        ex.life--;
+        if (ex.life === 10) {
+            if (currentBoss && Math.hypot(ex.x - currentBoss.x, ex.y - currentBoss.y) < ex.maxRadius) {
+                currentBoss.hp -= ex.damage;
+                currentBoss.hitFlash = 8;
+            }
+            zombies.forEach(z => {
+                if (Math.hypot(ex.x - z.x, ex.y - z.y) < ex.maxRadius) {
+                    z.hp -= ex.damage;
+                    z.hitFlash = 8;
+                }
+            });
+        }
+        if (ex.life <= 0) explosions.splice(i, 1);
+    }
+
+    for (let i = gems.length - 1; i >= 0; i--) {
+        let g = gems[i];
+        let dist = Math.hypot(player.x - g.x, player.y - g.y);
+        if (dist < player.magnetRadius) {
+            let angle = Math.atan2(player.y - g.y, player.x - g.x);
+            let pullSpeed = 13 + (player.magnetRadius - dist) * 0.16;
+            g.x += Math.cos(angle) * pullSpeed;
+            g.y += Math.sin(angle) * pullSpeed;
+
+            if (dist < player.radius + g.radius) {
+                playSound('gem');
+                player.exp += 1;
+                gems.splice(i, 1);
+
+                if (player.exp >= player.maxExp) {
+                    player.exp = 0;
+                    player.level++;
+                    player.maxExp = Math.floor(player.maxExp * 1.35);
+                    triggerLevelUp();
+                }
+            }
+        }
+    }
+
+    for (let i = hearts.length - 1; i >= 0; i--) {
+        let h = hearts[i];
+        let dist = Math.hypot(player.x - h.x, player.y - h.y);
+        if (dist < player.magnetRadius) {
+            let angle = Math.atan2(player.y - h.y, player.x - h.x);
+            let pullSpeed = 11 + (player.magnetRadius - dist) * 0.15;
+            h.x += Math.cos(angle) * pullSpeed;
+            h.y += Math.sin(angle) * pullSpeed;
+
+            if (dist < player.radius + h.radius) {
+                playSound('heal');
+                player.hp = Math.min(player.maxHp, player.hp + h.healAmount);
+                hearts.splice(i, 1);
+            }
+        }
+    }
+
+    spawnZombie();
+    updateWeapons();
+
+    let remainingSec = Math.ceil(waveTimer / 60);
+    document.getElementById('score-display').innerText = `スコア: ${score} (撃破: ${kills})`;
+    document.getElementById('timer-display').innerText = bossActive ? `⚠️ ボス戦中！` : `ボスまで: ${remainingSec}s`;
+    
+    let playerHpPercent = Math.max(0, (player.hp / player.maxHp) * 100);
+    document.getElementById('player-hp-bar').style.width = `${playerHpPercent}%`;
+    document.getElementById('player-hp-text').innerText = `HP: ${Math.max(0, Math.floor(player.hp))}/${player.maxHp}`;
+
+    document.getElementById('level-display').innerText = `Lv.${player.level}`;
+    document.getElementById('exp-bar').style.width = `${(player.exp / player.maxExp) * 100}%`;
+
+    if (bossActive && currentBoss) {
+        let hpPercent = Math.max(0, (currentBoss.hp / currentBoss.maxHp) * 100);
+        document.getElementById('boss-hp-bar').style.width = `${hpPercent}%`;
+    }
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    let zoom = 0.72;
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-player.x, -player.y);
+
+    let bgColors = { 1: '#172b15', 2: '#2b2415', 3: '#15252b', 4: '#2b1515' };
+    let borderColors = { 1: '#0a1409', 2: '#141209', 3: '#091214', 4: '#140909' };
+    
+    ctx.fillStyle = bgColors[stageLevel] || '#1f1f1f';
+    ctx.fillRect(0, 0, ARENA_SIZE, ARENA_SIZE);
+
+    arenaObjects.forEach(t => {
+        if (stageLevel === 1) {
+            ctx.fillStyle = t.type === 0 ? '#11200f' : (t.type === 1 ? '#1f381c' : '#142512');
+        } else if (stageLevel === 2) {
+            ctx.fillStyle = t.type === 0 ? '#382f1c' : (t.type === 1 ? '#45391f' : '#2b2313');
+        } else if (stageLevel === 3) {
+            ctx.fillStyle = t.type === 0 ? '#142d38' : (t.type === 1 ? '#1c3d4a' : '#0f2029');
+        } else {
+            ctx.fillStyle = t.type === 0 ? '#381414' : (t.type === 1 ? '#4a1c1c' : '#290f0f');
+        }
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, t.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    ctx.strokeStyle = borderColors[stageLevel] || '#111';
+    ctx.lineWidth = 14;
+    ctx.strokeRect(0, 0, ARENA_SIZE, ARENA_SIZE);
+
+    gems.forEach(g => {
+        ctx.fillStyle = '#00d2ff';
+        ctx.beginPath();
+        ctx.moveTo(g.x, g.y - g.radius);
+        ctx.lineTo(g.x + g.radius, g.y);
+        ctx.lineTo(g.x, g.y + g.radius);
+        ctx.lineTo(g.x - g.radius, g.y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    });
+
+    hearts.forEach(h => {
+        ctx.fillStyle = '#ff3366';
+        ctx.beginPath();
+        ctx.arc(h.x - 4, h.y - 2, 6, 0, Math.PI * 2);
+        ctx.arc(h.x + 4, h.y - 2, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(h.x - 10, h.y);
+        ctx.lineTo(h.x, h.y + 11);
+        ctx.lineTo(h.x + 10, h.y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    });
+
+    firePots.forEach(fp => {
+        ctx.fillStyle = 'rgba(230, 126, 34, 0.45)';
+        ctx.beginPath();
+        ctx.arc(fp.x, fp.y, fp.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#f39c12';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    });
+
+    sweepLasers.forEach(sl => {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.85)';
+        ctx.lineWidth = 18;
+        ctx.beginPath();
+        ctx.moveTo(sl.x, sl.y);
+        ctx.lineTo(sl.x + Math.cos(sl.angle) * sl.range, sl.y + Math.sin(sl.angle) * sl.range);
+        ctx.stroke();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(sl.x, sl.y);
+        ctx.lineTo(sl.x + Math.cos(sl.angle) * sl.range, sl.y + Math.sin(sl.angle) * sl.range);
+        ctx.stroke();
+        ctx.restore();
+    });
+
+    bossBeams.forEach(b => {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(231, 76, 60, 0.85)';
+        ctx.lineWidth = 14;
+        ctx.beginPath();
+        ctx.moveTo(b.x, b.y);
+        ctx.lineTo(b.x + Math.cos(b.angle) * b.maxRange, b.y + Math.sin(b.angle) * b.maxRange);
+        ctx.stroke();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(b.x, b.y);
+        ctx.lineTo(b.x + Math.cos(b.angle) * b.maxRange, b.y + Math.sin(b.angle) * b.maxRange);
+        ctx.stroke();
+        ctx.restore();
+    });
+
+    if (currentBoss) {
+        ctx.save();
+        ctx.translate(currentBoss.x, currentBoss.y);
+        ctx.fillStyle = currentBoss.hitFlash > 0 ? '#ffffff' : '#32143d';
+        ctx.beginPath();
+        ctx.arc(0, 0, currentBoss.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#e74c3c';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+
+        ctx.fillStyle = '#f39c12';
+        ctx.fillRect(-14, -10, 10, 10);
+        ctx.fillRect(4, -10, 10, 10);
+        ctx.restore();
+    }
+
+    zombies.forEach(z => {
+        ctx.save();
+        ctx.translate(z.x, z.y);
+
+        if (z.hitFlash > 0) {
+            ctx.fillStyle = '#ffffff';
+        } else {
+            if (z.stage === 1) {
+                ctx.fillStyle = z.type === 'fast' ? '#d35400' : (z.type === 'tank' ? '#1e8449' : '#7d3c98');
+            } else if (z.stage === 2) {
+                ctx.fillStyle = z.type === 'fast' ? '#e67e22' : (z.type === 'tank' ? '#d4ac0d' : '#ca6f1e');
+            } else if (z.stage === 3) {
+                ctx.fillStyle = z.type === 'fast' ? '#3498db' : (z.type === 'tank' ? '#1b4f72' : '#2980b9');
+            } else {
+                ctx.fillStyle = z.type === 'fast' ? '#ff4500' : (z.type === 'tank' ? '#8b0000' : '#b22222');
+            }
+        }
+
+        ctx.beginPath();
+        if (z.type === 'fast') {
+            ctx.moveTo(0, -z.radius);
+            ctx.lineTo(z.radius, z.radius);
+            ctx.lineTo(0, z.radius * 0.5);
+            ctx.lineTo(-z.radius, z.radius);
+        } else if (z.type === 'skull') {
+            for (let i = 0; i < 6; i++) {
+                let angle = (i * Math.PI) / 3;
+                let hx = Math.cos(angle) * z.radius;
+                let hy = Math.sin(angle) * z.radius;
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
+        } else if (z.type === 'slime') {
+            ctx.ellipse(0, 4, z.radius, z.radius * 0.75, 0, 0, Math.PI * 2);
+        } else {
+            ctx.arc(0, 0, z.radius, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillRect(-5, -4, 4, 4);
+        ctx.fillRect(2, -4, 4, 4);
+
+        ctx.restore();
+    });
+
+    bullets.forEach(b => {
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        if (b.type === 'kunai') {
+            ctx.rotate(b.angle);
+            ctx.fillStyle = '#00ffff';
+            ctx.beginPath();
+            ctx.moveTo(14, 0);
+            ctx.lineTo(-8, -6);
+            ctx.lineTo(-4, 0);
+            ctx.lineTo(-8, 6);
+            ctx.closePath();
+            ctx.fill();
+        } else {
+            ctx.fillStyle = '#f1c40f';
+            ctx.beginPath();
+            ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    });
+
+    soccerBalls.forEach(sb => {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(sb.x, sb.y, sb.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    });
+
+    drills.forEach(d => {
+        ctx.fillStyle = '#e67e22';
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    });
+
+    rockets.forEach(r => {
+        ctx.fillStyle = '#e74c3c';
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#f1c40f';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    });
+
+    boomerangs.forEach(bm => {
+        ctx.save();
+        ctx.translate(bm.x, bm.y);
+        ctx.rotate(bm.rotation);
+        ctx.fillStyle = '#e67e22';
+        ctx.fillRect(-12, -6, 24, 12);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-12, -6, 24, 12);
+        ctx.restore();
+    });
+
+    thunders.forEach(th => {
+        ctx.fillStyle = '#f1c40f';
+        ctx.font = '36px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⚡', th.x, th.y);
+        th.life--;
+    });
+    thunders = thunders.filter(th => th.life > 0);
+
+    explosions.forEach(ex => {
+        ctx.fillStyle = 'rgba(231, 76, 60, 0.65)';
+        ctx.beginPath();
+        ctx.arc(ex.x, ex.y, ex.maxRadius * (1 - ex.life/15), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#f39c12';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+    });
+
+    rotatingSwords.forEach(sw => {
+        let sx = player.x + Math.cos(sw.angle) * sw.distance;
+        let sy = player.y + Math.sin(sw.angle) * sw.distance;
+        ctx.fillStyle = '#ecf0f1';
+        ctx.beginPath();
+        ctx.arc(sx, sy, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#2c3e50';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+    });
+
+    ctx.save();
+    ctx.translate(player.x, player.y);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(0, player.radius + 2, 12, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#c0392b';
+    ctx.beginPath();
+    ctx.moveTo(-player.facing * 8, -4);
+    ctx.lineTo(-player.facing * 18, 14);
+    ctx.lineTo(-player.facing * 4, 16);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#2980b9';
+    ctx.beginPath();
+    ctx.arc(0, 2, player.radius * 0.75, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#1b4f72';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.fillStyle = '#3498db';
+    ctx.beginPath();
+    ctx.arc(0, -6, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#1b4f72';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#f1c40f';
+    ctx.fillRect(player.facing * 2 - 3, -8, 7, 3);
+
+    ctx.restore();
+
+    ctx.restore();
+
+    if (joystick.active) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(joystick.startX, joystick.startY, 34, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+}
+
+function loop() {
+    update();
+    draw();
+    if (gameStarted) {
+        requestAnimationFrame(loop);
+    }
+}
+
+function gameOver() {
+    gameStarted = false;
+
+    if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('survivor_highscore', highScore);
+    }
+
+    document.getElementById('boss-ui').style.display = 'none';
+
+    const stageNames = { 1: '1 (森)', 2: '2 (砂漠)', 3: '3 (海)', 4: '4 (溶岩地帯)' };
+    let curStageName = stageNames[stageLevel] || stageLevel;
+
+    document.getElementById('result-stage').innerText = `🌲 到達ステージ: ステージ ${curStageName}`;
+    document.getElementById('result-score').innerText = `⭐ 獲得スコア: ${score} pt`;
+    document.getElementById('result-rank').innerText = `🏆 ハイスコア: ${highScore} pt`;
+
+    document.getElementById('result-screen').style.display = 'flex';
+}
+</script>
+
+</body>
+</html>
