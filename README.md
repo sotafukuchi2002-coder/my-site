@@ -1,5 +1,3 @@
-# my-site
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
